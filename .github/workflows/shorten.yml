@@ -1,0 +1,32 @@
+name: Generate Redirects
+
+on:
+  push:
+    paths:
+      - 'urls.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Generate redirect HTML files
+        run: |
+          mkdir -p go
+          node scripts/generate-redirects.js
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add go/
+          git commit -m "Add new redirects" || echo "No changes to commit"
+          git push
