@@ -1,61 +1,165 @@
+<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dracula">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shorten It!</title>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.4s ease-out both;
+    }
+  </style>
 </head>
-<body class="bg-base-100 text-base-content min-h-screen flex flex-col items-center justify-center px-4">
+<body class="bg-base-100 text-base-content min-h-screen flex items-center justify-center p-4">
 
-  <div class="max-w-md w-full card bg-base-200 shadow-xl p-6 space-y-4">
-    <h1 class="text-3xl font-bold text-center">URL Shortener</h1>
-    
-    <form id="shortenForm" class="space-y-3">
-      <input type="url" id="longUrl" placeholder="Paste long URL here" required class="input input-bordered w-full" />
-      <input type="text" id="customAlias" placeholder="Custom alias (optional)" class="input input-bordered w-full" />
-      <button type="submit" class="btn btn-primary w-full">Shorten</button>
-    </form>
+  <div class="w-full max-w-xl space-y-6 animate-fade-in">
+    <div class="card bg-base-300 rounded-box shadow-xl p-6">
+      <div class="text-center mb-4">
+        <h1 class="text-3xl font-bold mb-1">🔗 URL Shortener</h1>
+        <p class="text-sm text-base-content/70">Paste your long URL and get a short link instantly.</p>
+      </div>
 
-    <div id="result" class="text-center text-success font-semibold mt-4 hidden"></div>
+      <form id="shortenForm" class="space-y-4">
+        <input type="url" id="longUrl" placeholder="Paste long URL here" required class="input input-bordered w-full" />
+
+        <div class="form-control">
+          <label class="label cursor-pointer gap-2">
+            <input type="checkbox" id="toggleAlias" class="checkbox" />
+            <span class="label-text">Use custom alias</span>
+          </label>
+        </div>
+
+        <input type="text" id="customAlias" placeholder="Custom alias (e.g. youtube)" class="input input-bordered w-full hidden" />
+
+        <button type="submit" class="btn btn-primary w-full">Shorten</button>
+      </form>
+
+      <div id="loader" class="text-center hidden mt-4">
+        <span class="loading loading-spinner text-primary loading-lg"></span>
+      </div>
+    </div>
+
+    <!-- List of links -->
+    <ul id="linkList" class="list bg-base-300 rounded-box shadow-md divide-y divide-base-100">
+      <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">🔗 Link history</li>
+      <!-- List items will be added here -->
+    </ul>
   </div>
 
   <script>
-    document.getElementById('shortenForm').addEventListener('submit', async function (e) {
+    const form = document.getElementById('shortenForm');
+    const longUrlInput = document.getElementById('longUrl');
+    const customAliasInput = document.getElementById('customAlias');
+    const toggleAlias = document.getElementById('toggleAlias');
+    const loader = document.getElementById('loader');
+    const linkList = document.getElementById('linkList');
+
+    let linkCounter = 1;
+
+    toggleAlias.addEventListener('change', () => {
+      customAliasInput.classList.toggle('hidden', !toggleAlias.checked);
+    });
+
+    function addLinkItem(statusText, longUrl, shortUrl = '', type = 'processing') {
+      const li = document.createElement('li');
+      li.className = "list-row p-4 items-center gap-4 flex";
+
+      const num = linkCounter.toString().padStart(2, '0');
+      linkCounter++;
+
+      const icon = document.createElement('div');
+      icon.className = "text-2xl font-thin opacity-30 tabular-nums";
+      icon.textContent = num;
+
+      const grow = document.createElement('div');
+      grow.className = "list-col-grow flex-1";
+
+      const title = document.createElement('div');
+      title.className = "font-semibold break-words";
+      title.textContent = longUrl;
+
+      const subtitle = document.createElement('div');
+      subtitle.className = "text-xs uppercase font-semibold opacity-60";
+
+      if (type === 'success') {
+        subtitle.innerHTML = `✅ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a>`;
+      } else if (type === 'error') {
+        subtitle.innerHTML = `❌ ${statusText}`;
+      } else {
+        subtitle.innerHTML = `⏳ ${statusText}`;
+      }
+
+      grow.appendChild(title);
+      grow.appendChild(subtitle);
+
+      li.appendChild(icon);
+      li.appendChild(grow);
+      linkList.appendChild(li);
+    }
+
+    async function waitForRedirect(url, maxTries = 10) {
+      for (let i = 0; i < maxTries; i++) {
+        const res = await fetch(url, { method: 'HEAD' });
+        if (res.status === 200) return true;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      return false;
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      loader.classList.remove('hidden');
 
-      const longUrl = document.getElementById('longUrl').value;
-      const customAlias = document.getElementById('customAlias').value.trim();
-      const resultDiv = document.getElementById('result');
+      const longUrl = longUrlInput.value;
+      const customAlias = toggleAlias.checked ? customAliasInput.value.trim() : "";
 
-      resultDiv.classList.add('hidden');
-      resultDiv.textContent = '';
+      addLinkItem("Processing...", longUrl);
+      const listItems = linkList.querySelectorAll('li');
+      const currentItem = listItems[listItems.length - 1];
 
       try {
-        const response = await fetch('https://animegamer-link-shorte-92.deno.dev/', {
+        const res = await fetch('https://animegamer-link-shorte-92.deno.dev/', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ longUrl, customAlias: customAlias || undefined }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ longUrl, customAlias }),
         });
 
-        const data = await response.json();
+        const data = await res.json();
+        const shortUrl = data.shortUrl;
 
-        if (response.ok) {
-          resultDiv.textContent = `Short URL: ${data.shortUrl}`;
-          resultDiv.classList.remove('hidden');
-        } else {
-          resultDiv.textContent = `Error: ${data.error || 'Failed to shorten URL.'}`;
-          resultDiv.classList.remove('hidden');
+        loader.classList.add('hidden');
+
+        if (!res.ok) {
+          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML = `❌ ${data.error || 'Failed to shorten URL'}`;
+          return;
         }
-      } catch (error) {
-        resultDiv.textContent = 'Error: Unable to connect to the server.';
-        resultDiv.classList.remove('hidden');
+
+        currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
+          `⏳ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a><br>Waiting for redirect page...`;
+
+        const isReady = await waitForRedirect(shortUrl);
+
+        if (isReady) {
+          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
+            `✅ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a>`;
+        } else {
+          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
+            `⚠️ Redirect not live yet. You can still use this link: <a href="${shortUrl}" class="link link-warning" target="_blank">${shortUrl}</a>`;
+        }
+      } catch (err) {
+        loader.classList.add('hidden');
+        currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML = `❌ Something went wrong. Please try again.`;
       }
     });
   </script>
-
 </body>
 </html>
