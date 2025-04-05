@@ -1,58 +1,150 @@
-<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
 <!DOCTYPE html>
-<html lang="en" data-theme="dracula">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shorten It!</title>
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css" />
   <style>
-    @keyframes fade-in {
+    :root {
+      --bg: #282a36;
+      --line: #44475a;
+      --text: #f8f8f2;
+      --comment: #6272a4;
+      --cyan: #8be9fd;
+      --green: #50fa7b;
+      --orange: #ffb86c;
+      --pink: #ff79c6;
+      --purple: #bd93f9;
+      --red: #ff5555;
+      --yellow: #f1fa8c;
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    main {
+      width: 80%;
+      height: 80%;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .flex-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .box, .input, .textarea, .button {
+      background-color: var(--line) !important;
+      color: var(--text) !important;
+      border-color: var(--purple);
+    }
+
+    .input::placeholder, .textarea::placeholder {
+      color: var(--comment);
+    }
+
+    .button.is-primary {
+      background-color: var(--purple) !important;
+      border-color: var(--purple) !important;
+      color: var(--text);
+    }
+
+    .button.is-primary:hover {
+      background-color: var(--pink) !important;
+    }
+
+    .is-size-7 a {
+      color: var(--cyan);
+    }
+
+    .has-text-danger {
+      color: var(--red) !important;
+    }
+
+    .has-text-success {
+      color: var(--green) !important;
+    }
+
+    .has-text-warning {
+      color: var(--orange) !important;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out both;
+    }
+
+    @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .animate-fade-in {
-      animation: fade-in 0.4s ease-out both;
+    .link-history {
+      overflow-wrap: anywhere;
     }
   </style>
 </head>
-<body class="bg-base-100 text-base-content min-h-screen flex items-center justify-center p-4">
+<body>
+  <div class="flex-center">
+    <main class="fade-in">
+      <section class="section is-flex is-justify-content-center is-align-items-center">
+        <div class="container fade-in" style="max-width: 600px;">
+          <div class="box">
+            <div class="has-text-centered mb-4">
+              <h1 class="title is-3 has-text-white">🔗 URL Shortener</h1>
+              <p class="subtitle is-6" style="color: var(--comment);">Paste your long URL and get a short link instantly.</p>
+            </div>
 
-  <div class="w-full max-w-xl space-y-6 animate-fade-in">
-    <div class="card bg-base-300 rounded-box shadow-xl p-6">
-      <div class="text-center mb-4">
-        <h1 class="text-3xl font-bold mb-1">🔗 URL Shortener</h1>
-        <p class="text-sm text-base-content/70">Paste your long URL and get a short link instantly.</p>
-      </div>
+            <form id="shortenForm">
+              <div class="field">
+                <div class="control">
+                  <input type="url" id="longUrl" required class="input" placeholder="Paste long URL here" />
+                </div>
+              </div>
 
-      <form id="shortenForm" class="space-y-4">
-        <input type="url" id="longUrl" placeholder="Paste long URL here" required class="input input-bordered w-full" />
+              <div class="field">
+                <label class="checkbox is-size-5">
+                  <input type="checkbox" id="toggleAlias" />
+                  <span style="color: var(--comment);">Use custom alias</span>
+                </label>
+              </div>
 
-        <div class="form-control">
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox" id="toggleAlias" class="checkbox" />
-            <span class="label-text">Use custom alias</span>
-          </label>
+              <div class="field" id="aliasField" style="display: none;">
+                <div class="control">
+                  <input type="text" id="customAlias" class="input" placeholder="Custom alias (e.g. youtube)" />
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="control">
+                  <button class="button is-primary is-fullwidth" type="submit">Shorten</button>
+                </div>
+              </div>
+            </form>
+
+            <div id="loader" class="has-text-centered mt-4" style="display: none;">
+              <button class="button is-loading is-primary is-light">Loading</button>
+            </div>
+          </div>
+
+          <div class="box mt-5" style="flex: 1; overflow-y: auto;">
+            <p class="is-size-7" style="color: var(--comment);">🔗 Link history</p>
+            <ul id="linkList" class="link-history"></ul>
+          </div>
         </div>
-
-        <input type="text" id="customAlias" placeholder="Custom alias (e.g. youtube)" class="input input-bordered w-full hidden" />
-
-        <button type="submit" class="btn btn-primary w-full">Shorten</button>
-      </form>
-
-      <div id="loader" class="text-center hidden mt-4">
-        <span class="loading loading-spinner text-primary loading-lg"></span>
-      </div>
-    </div>
-
-    <!-- List of links -->
-    <ul id="linkList" class="list bg-base-300 rounded-box shadow-md divide-y divide-base-100">
-      <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">🔗 Link history</li>
-      <!-- List items will be added here -->
-    </ul>
+      </section>
+    </main>
   </div>
 
   <script>
@@ -62,69 +154,113 @@
     const toggleAlias = document.getElementById('toggleAlias');
     const loader = document.getElementById('loader');
     const linkList = document.getElementById('linkList');
+    const aliasField = document.getElementById('aliasField');
 
     let linkCounter = 1;
 
-    toggleAlias.addEventListener('change', () => {
-      customAliasInput.classList.toggle('hidden', !toggleAlias.checked);
+    const storedLinks = JSON.parse(localStorage.getItem('shortenedLinks')) || [];
+    linkList.innerHTML = '';
+    storedLinks.forEach(link => {
+      addLinkItem(link.statusText, link.longUrl, link.shortUrl, link.type, link.qr, true);
     });
 
-    function addLinkItem(statusText, longUrl, shortUrl = '', type = 'processing') {
+    toggleAlias.addEventListener('change', () => {
+      aliasField.style.display = toggleAlias.checked ? 'block' : 'none';
+    });
+
+    function updateQRFlag(shortUrl) {
+      for (let link of storedLinks) {
+        if (link.shortUrl === shortUrl) {
+          link.qr = true;
+          break;
+        }
+      }
+      localStorage.setItem('shortenedLinks', JSON.stringify(storedLinks));
+    }
+
+    function addLinkItem(statusText, longUrl, shortUrl = '', type = 'processing', qr = false, skipStorage = false) {
       const li = document.createElement('li');
-      li.className = "list-row p-4 items-center gap-4 flex";
+      li.className = "box mb-3";
 
-      const num = linkCounter.toString().padStart(2, '0');
-      linkCounter++;
+      let num = '??';
+if (type !== 'processing') {
+  num = linkCounter.toString().padStart(2, '0');
+  linkCounter++;
+}
 
-      const icon = document.createElement('div');
-      icon.className = "text-2xl font-thin opacity-30 tabular-nums";
-      icon.textContent = num;
 
-      const grow = document.createElement('div');
-      grow.className = "list-col-grow flex-1";
-
-      const title = document.createElement('div');
-      title.className = "font-semibold break-words";
-      title.textContent = longUrl;
-
-      const subtitle = document.createElement('div');
-      subtitle.className = "text-xs uppercase font-semibold opacity-60";
+      let content = `<strong style="color: var(--comment);">${num}.</strong><br>`;
+      content += `<div class="has-text-weight-semibold">${longUrl}</div>`;
 
       if (type === 'success') {
-        subtitle.innerHTML = `✅ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a>`;
+        content += `
+          <div class="is-size-7 has-text-success mt-1">
+            ✅ <a href="${shortUrl}" target="_blank">${shortUrl}</a>
+          </div>
+          <div class="mt-2">
+            <button class="button is-small is-primary is-light qr-toggle" data-url="${shortUrl}">
+              ${qr ? 'Hide QR Code' : '📷 Generate QR'}
+            </button>
+            <div class="qr-container mt-2" style="display: ${qr ? 'block' : 'none'};">
+              ${qr ? `<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shortUrl)}" alt="QR Code" />` : ''}
+            </div>
+          </div>
+        `;
       } else if (type === 'error') {
-        subtitle.innerHTML = `❌ ${statusText}`;
+        content += `<div class="is-size-7 has-text-danger mt-1">❌ ${statusText}</div>`;
       } else {
-        subtitle.innerHTML = `⏳ ${statusText}`;
+        content += `<div class="is-size-7 has-text-grey mt-1">⏳ ${statusText}</div>`;
       }
 
-      grow.appendChild(title);
-      grow.appendChild(subtitle);
-
-      li.appendChild(icon);
-      li.appendChild(grow);
+      li.innerHTML = content;
       linkList.appendChild(li);
+
+      if (type === 'success') {
+        const qrBtn = li.querySelector('.qr-toggle');
+        const qrContainer = li.querySelector('.qr-container');
+
+        qrBtn.addEventListener('click', () => {
+          if (qrContainer.style.display === 'none' || qrContainer.innerHTML === '') {
+            qrContainer.innerHTML = `
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shortUrl)}" alt="QR Code" />
+            `;
+            qrContainer.style.display = 'block';
+            qrBtn.textContent = 'Hide QR Code';
+            updateQRFlag(shortUrl);
+          } else {
+            qrContainer.style.display = 'none';
+            qrBtn.textContent = '📷 Generate QR';
+          }
+        });
+      }
+
+      if (!skipStorage && type !== 'processing') {
+        const alreadyStored = storedLinks.some(link => link.shortUrl === shortUrl);
+        if (!alreadyStored) {
+          storedLinks.push({ statusText, longUrl, shortUrl, type, qr });
+          localStorage.setItem('shortenedLinks', JSON.stringify(storedLinks));
+        }
+      }
     }
 
     async function waitForRedirect(url, maxTries = 10) {
       for (let i = 0; i < maxTries; i++) {
         const res = await fetch(url, { method: 'HEAD' });
         if (res.status === 200) return true;
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 1000));
       }
       return false;
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      loader.classList.remove('hidden');
+      loader.style.display = 'block';
 
       const longUrl = longUrlInput.value;
       const customAlias = toggleAlias.checked ? customAliasInput.value.trim() : "";
 
       addLinkItem("Processing...", longUrl);
-      const listItems = linkList.querySelectorAll('li');
-      const currentItem = listItems[listItems.length - 1];
+      const currentItem = linkList.lastElementChild;
 
       try {
         const res = await fetch('https://animegamer-link-shorte-92.deno.dev/', {
@@ -136,28 +272,26 @@
         const data = await res.json();
         const shortUrl = data.shortUrl;
 
-        loader.classList.add('hidden');
+        loader.style.display = 'none';
 
         if (!res.ok) {
-          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML = `❌ ${data.error || 'Failed to shorten URL'}`;
+          currentItem.innerHTML += `<div class="is-size-7 has-text-danger mt-1">❌ ${data.error || 'Failed to shorten URL'}</div>`;
           return;
         }
 
-        currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
-          `⏳ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a><br>Waiting for redirect page...`;
+        currentItem.innerHTML += `<div class="is-size-7 mt-1" style="color: var(--comment);">⏳ <a href="${shortUrl}" target="_blank">${shortUrl}</a><br>Waiting for redirect page...</div>`;
 
         const isReady = await waitForRedirect(shortUrl);
 
+        linkList.removeChild(currentItem);
         if (isReady) {
-          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
-            `✅ <a href="${shortUrl}" target="_blank" class="link link-primary">${shortUrl}</a>`;
+          addLinkItem("OK", longUrl, shortUrl, 'success', false);
         } else {
-          currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML =
-            `⚠️ Redirect not live yet. You can still use this link: <a href="${shortUrl}" class="link link-warning" target="_blank">${shortUrl}</a>`;
+          addLinkItem("Redirect not ready", longUrl, shortUrl, 'success', false);
         }
       } catch (err) {
-        loader.classList.add('hidden');
-        currentItem.querySelector('.list-col-grow div:nth-child(2)').innerHTML = `❌ Something went wrong. Please try again.`;
+        loader.style.display = 'none';
+        currentItem.innerHTML += `<div class="is-size-7 has-text-danger mt-1">❌ Something went wrong. Please try again.</div>`;
       }
     });
   </script>
