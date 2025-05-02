@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    body {
+      background: #282a36;
+      color: #f8f8f2;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    a { color: #8be9fd; }
+  </style>
+</head>
+<body>
+  <h2>⏳ Attempting redirect...</h2>
+  <p id="msg">Hold on while we check the alias...</p>
+
+  <script>
+    (async () => {
+      const pathParts = location.pathname.split('/');
+      const alias = pathParts.filter(Boolean).pop();
+
+      if (!alias || alias === '404.html') {
+        document.getElementById("msg").innerText = "❌ Invalid alias.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/Link-shortener/urls.json"); // <- change for your repo path
+        const urls = await res.json();
+
+        if (urls[alias]) {
+          document.getElementById("msg").innerHTML = `✅ Redirecting to <a href="${urls[alias]}">${urls[alias]}</a>`;
+          setTimeout(() => location.replace(urls[alias]), 800);
+        } else {
+          document.getElementById("msg").innerText = `❌ Alias "${alias}" not found.`;
+        }
+      } catch (err) {
+        document.getElementById("msg").innerText = "⚠️ Couldn't load redirect list.";
+      }
+    })();
+  </script>
+</body>
+</html>
