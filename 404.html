@@ -30,17 +30,22 @@
       }
 
       try {
-        const res = await fetch("/Link-shortener/urls.json"); // <- change for your repo path
+        // Force a fresh fetch from raw GitHub, bust cache with timestamp
+        const res = await fetch(
+          "https://raw.githubusercontent.com/animegamer4422/Link-shortener/testing/urls.json?" + Date.now(),
+          { cache: "no-store" }
+        );
         const urls = await res.json();
 
         if (urls[alias]) {
           document.getElementById("msg").innerHTML = `✅ Redirecting to <a href="${urls[alias]}">${urls[alias]}</a>`;
           setTimeout(() => location.replace(urls[alias]), 800);
         } else {
-          document.getElementById("msg").innerText = `❌ Alias "${alias}" not found.`;
+          document.getElementById("msg").innerText = `❌ Alias "${alias}" not found in latest data.`;
         }
       } catch (err) {
-        document.getElementById("msg").innerText = "⚠️ Couldn't load redirect list.";
+        console.error("Redirect error:", err);
+        document.getElementById("msg").innerText = "⚠️ Couldn't fetch latest redirect list.";
       }
     })();
   </script>
